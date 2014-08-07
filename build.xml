@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="all" name="JRIA-product">
+
+  <property environment="env"/>
+	<property name="java.home" value="${env.JAVA_HOME}"/>
+	<property name="ant.home"  value="${env.ANT_HOME}"/>
+
+	<property name="project.name" value="JRIA"/>
+	<property name="project.addons.name" value="JRIA-addons"/>
+	<property name="project.version" value="0.1 build 02"/>
+	<property name="agent.class" value="com.baidu.jria.instrument.Agent"/>
+
+	
+	<property name="src.dir" value="src/core" />
+	<property name="src.addon.dir" value="src/addons" />
+	<property name="src.asm.dir" value="src/asm" />
+	<property name="src.javassist.dir" value="src/javassist" />
+	
+	<property name="classes.dir" value="debug" />
+	<property name="addons_classes.dir" value="addons" />
+	<property name="lib.dir" value="lib" />
+	
+	<property name="output.dir" value="output" />
+	<property name="dist.jar.name" value="JRIA.jar"/>
+	<property name="addons.jar.name" value="addons.jar"/>
+	
+	<property name="debug" value="on"/>
+	<property name="encoding" value="UTF-8"/>
+	
+	<path id="project.classpath">
+		<pathelement path="${lib.dir}" />
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+		
+    <target name="init">
+    	
+    	<mkdir dir="${output.dir}"/>
+        <mkdir dir="${output.dir}/${classes.dir}"/> 
+        <mkdir dir="${output.dir}/${addons_classes.dir}"/> 
+    </target>
+
+    <target name="clean">
+        <delete dir="${output.dir}"/>
+    </target>
+
+    <target depends="init" name="build">
+        <javac destdir="${output.dir}/${classes.dir}" deprecation="true" 
+        	encoding="${encoding}" debug="${debug}">
+            <src path="${src.dir}"/> 
+            <src path="${src.asm.dir}"/> 
+            <src path="${src.javassist.dir}"/> 
+        	<classpath refid="project.classpath" />
+        </javac>    
+    </target>
+	
+    <target depends="build" name="build_addons">
+        <javac destdir="${output.dir}/${addons_classes.dir}" deprecation="true" 
+        	encoding="${encoding}" debug="${debug}">
+            <src path="${src.addon.dir}"/> 
+        	<classpath refid="project.classpath" />
+        	<classpath location="${output.dir}/${classes.dir}"></classpath>
+        </javac>    
+    </target>
+
+    <target depends="build_addons" name="dist">
+        <mkdir dir="${output.dir}" />
+    	
+		<jar jarfile="${output.dir}/${classes.dir}/${addons.jar.name}" basedir="${output.dir}/${addons_classes.dir}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Implementation-Title" value="${project.addons.name}" />
+				<attribute name="Specification-Title" value="${project.addons.name}" />
+				<attribute name="Specification-Version" value="${project.version}" />
+			</manifest>
+		</jar>  	
+    	
+    	
+		<jar jarfile="${output.dir}/${dist.jar.name}" basedir="${output.dir}/${classes.dir}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Premain-Class" value="${agent.class}" />
+				<attribute name="Can-Redefine-Classes" value="true" />
+				<attribute name="Boot-Class-Path" value="${dist.jar.name}" />
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Specification-Title" value="${project.name}" />
+				<attribute name="Specification-Version" value="${project.version}" />
+			</manifest>
+		</jar>
+    	<!--
+		<delete dir="${output.dir}/${classes.dir}" />  
+		<delete dir="${output.dir}/${addons_classes.dir}" />  
+		-->
+    </target>
+	
+	<target depends="clean, dist" name="all">
+	</target>
+
+</project>
